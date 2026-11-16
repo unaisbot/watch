@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173d32">
+  <meta name="description" content="Invasive Watch Kerala – field monitoring platform">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css">
+  <title>Invasive Watch Kerala</title>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./">
+      <span class="brand-mark">IW</span>
+      <span><strong>Invasive Watch Kerala</strong><small>A TBARC initiative</small></span>
+    </a>
+    <div class="header-actions">
+      <button id="languageToggle" class="button button-light" type="button">മലയാളം</button>
+      <button id="logoutButton" class="button button-outline hidden" type="button">Log out</button>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow" data-i18n="eyebrow">FIELD MONITORING PLATFORM</p>
+      <h1 data-i18n="title">Document invasive species. Understand ecosystems.</h1>
+      <p class="hero-copy" data-i18n="intro">A bilingual field-survey platform for recording invasive plants and animals across Kerala.</p>
+    </section>
+
+    <section id="authSection" class="auth-layout">
+      <div class="info-panel">
+        <h2 data-i18n="welcomeHeading">Welcome to Invasive Watch Kerala</h2>
+        <p data-i18n="welcomeText">Approved volunteers will be able to record field surveys, quadrat samples and invasive animal observations. Survey tools will be added in the next development stages.</p>
+        <ul>
+          <li data-i18n="feature1">Plant quadrat sampling</li>
+          <li data-i18n="feature2">Invasive animal observations</li>
+          <li data-i18n="feature3">Location-based ecological records</li>
+          <li data-i18n="feature4">English and Malayalam interface</li>
+        </ul>
+      </div>
+
+      <div class="auth-card">
+        <div class="tab-row">
+          <button id="loginTab" class="tab active" type="button" data-i18n="login">Log in</button>
+          <button id="registerTab" class="tab" type="button" data-i18n="register">Register</button>
+        </div>
+
+        <form id="loginForm">
+          <label for="loginEmail" data-i18n="email">Email address</label>
+          <input id="loginEmail" type="email" autocomplete="email" required>
+          <label for="loginPassword" data-i18n="password">Password</label>
+          <input id="loginPassword" type="password" autocomplete="current-password" required minlength="6">
+          <button class="button button-primary full" type="submit" data-i18n="loginButton">Log in</button>
+        </form>
+
+        <form id="registerForm" class="hidden">
+          <label for="registerName" data-i18n="fullName">Full name</label>
+          <input id="registerName" type="text" autocomplete="name" required maxlength="100">
+          <label for="registerEmail" data-i18n="email">Email address</label>
+          <input id="registerEmail" type="email" autocomplete="email" required>
+          <label for="registerPassword" data-i18n="password">Password</label>
+          <input id="registerPassword" type="password" autocomplete="new-password" required minlength="6">
+          <button class="button button-primary full" type="submit" data-i18n="registerButton">Create volunteer account</button>
+          <p class="small-note" data-i18n="approvalNote">New accounts require administrator approval before field-survey access is granted.</p>
+        </form>
+        <p id="message" class="message" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section id="dashboardSection" class="dashboard-card hidden">
+      <div class="dashboard-heading">
+        <div>
+          <p class="eyebrow" data-i18n="volunteerPortal">VOLUNTEER PORTAL</p>
+          <h2 id="userGreeting">Welcome</h2>
+        </div>
+        <span id="approvalBadge" class="status-badge">Pending approval</span>
+      </div>
+      <p id="accountMessage"></p>
+      <div class="next-stage">
+        <strong data-i18n="comingNext">Coming in the next stages</strong>
+        <p data-i18n="comingNextText">Survey creation, GPS location, plant quadrats, invasive animal sampling and offline field recording.</p>
+      </div>
+    </section>
+
+    <footer>
+      <span>Invasive Watch Kerala · A TBARC initiative</span>
+      <span id="connectionStatus">Connecting…</span>
+    </footer>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
