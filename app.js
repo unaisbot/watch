@@ -1,10 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {
   getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  onAuthStateChanged, signOut, updateProfile
+  onAuthStateChanged, signOut, updateProfile, getIdTokenResult
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
-  getFirestore, doc, setDoc, getDoc, serverTimestamp
+  getFirestore, doc, setDoc, getDoc, serverTimestamp, collection, getDocs, updateDoc
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -15,6 +15,9 @@ const db = getFirestore(app);
 const $ = (id) => document.getElementById(id);
 const authSection = $("authSection");
 const dashboardSection = $("dashboardSection");
+const adminSection = $("adminSection");
+let currentUser = null;
+let volunteerCache = [];
 const message = $("message");
 let language = localStorage.getItem("iwk-language") || "en";
 
@@ -101,13 +104,135 @@ function showMessage(text, type = "") {
   message.className = `message ${type}`;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[char]);
+}
+
+function formatDate(value) {
+  if (!value) return "—";
+  const date = typeof value.toDate === "function" ? value.toDate() : new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleDateString();
+}
+
+function renderVolunteerRows(filter = "") {
+  const body = $("volunteerTableBody");
+  const term = filter.trim().toLowerCase();
+  const records = volunteerCache.filter((person) => {
+    const searchable = `${person.name || ""} ${person.email || ""} ${person.approvalStatus || ""}`.toLowerCase();
+    return searchable.includes(term);
+  });
+  body.replaceChildren();
+  if (!records.length) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 5;
+    cell.className = "empty-cell";
+    cell.textContent = "No matching volunteer accounts.";
+    row.append(cell);
+    body.append(row);
+    return;
+  }
+  for (const person of records) {
+    const row = document.createElement("tr");
+    const status = person.approvalStatus || "pending";
+    const isAdmin = person.role === "admin";
+    const nameCell = document.createElement("td");
+    nameCell.textContent = person.name || "—";
+    const emailCell = document.createElement("td");
+    emailCell.textContent = person.email || "—";
+    const dateCell = document.createElement("td");
+    dateCell.textContent = formatDate(person.createdAt);
+    const statusCell = document.createElement("td");
+    const badge = document.createElement("span");
+    badge.className = `table-status ${status}`;
+    badge.textContent = isAdmin ? "Administrator" : status;
+    statusCell.append(badge);
+    const actionCell = document.createElement("td");
+    if (!isAdmin) {
+      if (status !== "approved") {
+        const approve = document.createElement("button");
+        approve.className = "button button-approve";
+        approve.textContent = "Approve";
+        approve.addEventListener("click", () => updateVolunteerStatus(person.uid, "approved", approve));
+        actionCell.append(approve);
+      }
+      if (status !== "rejected") {
+        const reject = document.createElement("button");
+        reject.className = "button button-reject";
+        reject.textContent = "Reject";
+        reject.addEventListener("click", () => updateVolunteerStatus(person.uid, "rejected", reject));
+        actionCell.append(reject);
+      }
+    } else {
+      actionCell.textContent = "—";
+    }
+    row.append(nameCell, emailCell, dateCell, statusCell, actionCell);
+    body.append(row);
+  }
+}
+
+async function loadVolunteers() {
+  $("volunteerTableBody").innerHTML = '<tr><td colspan="5" class="empty-cell">Loading volunteer records…</td></tr>';
+  try {
+    const snapshot = await getDocs(collection(db, "volunteers"));
+    volunteerCache = snapshot.docs.map((item) => ({ uid: item.id, ...item.data() }))
+      .sort((a, b) => {
+        const aDate = a.createdAt?.toMillis?.() || 0;
+        const bDate = b.createdAt?.toMillis?.() || 0;
+        return bDate - aDate;
+      });
+    $("totalVolunteerCount").textContent = volunteerCache.filter((p) => p.role !== "admin").length;
+    $("pendingVolunteerCount").textContent = volunteerCache.filter((p) => p.role !== "admin" && (p.approvalStatus || "pending") === "pending").length;
+    $("approvedVolunteerCount").textContent = volunteerCache.filter((p) => p.role !== "admin" && p.approvalStatus === "approved").length;
+    renderVolunteerRows($("volunteerSearch").value);
+    $("adminMessage").textContent = "Volunteer records loaded.";
+  } catch (error) {
+    console.error("Volunteer list error:", error);
+    $("adminMessage").textContent = "Unable to load volunteers. Check Firestore permissions and try again.";
+  }
+}
+
+async function updateVolunteerStatus(uid, status, button) {
+  if (!currentUser) return;
+  const confirmed = window.confirm(`Are you sure you want to ${status} this volunteer?`);
+  if (!confirmed) return;
+  button.disabled = true;
+  try {
+    await updateDoc(doc(db, "volunteers", uid), {
+      approvalStatus: status,
+      reviewedAt: serverTimestamp(),
+      reviewedBy: currentUser.uid
+    });
+    await loadVolunteers();
+    $("adminMessage").textContent = `Volunteer ${status} successfully.`;
+  } catch (error) {
+    console.error("Volunteer update error:", error);
+    $("adminMessage").textContent = "Could not update this volunteer. Please try again.";
+    button.disabled = false;
+  }
+}
+
 async function renderUserDashboard(user) {
+  currentUser = user;
   authSection.classList.add("hidden");
   dashboardSection.classList.remove("hidden");
   $("logoutButton").classList.remove("hidden");
   $("userGreeting").textContent = user.displayName || user.email || "Volunteer";
+  adminSection.classList.add("hidden");
 
   try {
+    const token = await getIdTokenResult(user, true);
+    if (token.claims.admin === true) {
+      adminSection.classList.remove("hidden");
+      $("approvalBadge").textContent = "Administrator";
+      $("approvalBadge").classList.add("admin-badge");
+      $("accountMessage").textContent = "Administrator access is active. You can review volunteer applications below.";
+      await loadVolunteers();
+      return;
+    }
+    $("approvalBadge").classList.remove("admin-badge");
     const profileSnapshot = await getDoc(doc(db, "volunteers", user.uid));
     if (!profileSnapshot.exists()) {
       $("accountMessage").textContent = t("accountUnavailable");
@@ -213,10 +338,15 @@ $("logoutButton").addEventListener("click", async () => {
   }
 });
 
+$("volunteerSearch").addEventListener("input", () => renderVolunteerRows($("volunteerSearch").value));
+$("refreshVolunteers").addEventListener("click", loadVolunteers);
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     authSection.classList.remove("hidden");
     dashboardSection.classList.add("hidden");
+    adminSection.classList.add("hidden");
+    currentUser = null;
     $("logoutButton").classList.add("hidden");
     $("connectionStatus").textContent = t("connection");
     return;

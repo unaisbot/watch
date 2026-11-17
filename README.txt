@@ -1,45 +1,31 @@
-INVASIVE WATCH KERALA – STAGE 1
-================================
+INVASIVE WATCH KERALA – STAGE 1 + ADMIN DASHBOARD
 
-CONTENTS
-- index.html: bilingual login and registration interface
-- app.js: Firebase Authentication and volunteer profile logic
-- firebase-config.js: your Firebase web configuration
-- styles.css: responsive interface
-- firestore.rules: initial Firestore security rules
-- manifest.webmanifest: PWA metadata
-- service-worker.js: basic app-shell caching (not full offline survey support)
-
-IMPORTANT
-1. This is Stage 1 only. Survey creation, quadrats, animal records, photo uploads,
-   full offline data capture and admin approval tools are not implemented yet.
-2. The first volunteer account is pending approval. Do not manually change a
-   volunteer's approvalStatus from the browser.
-3. Publish firestore.rules in Firebase Console before testing registration.
-4. The app uses Firebase JS SDK 11.10.0 through Google's CDN.
-5. Serve through GitHub Pages or a local web server. Do not open index.html
-   directly as a file.
-6. Firebase Storage is not used in this stage.
+This package is for the independent GitHub Pages application:
+https://unaisbot.github.io/watch/
 
 DEPLOYMENT
-Copy the contents of the "survey" folder into the "survey" directory in your
-Bioinvasion GitHub repository. The expected public URL is:
-https://bioinvasion.in/survey/
+1. Extract this ZIP on your computer.
+2. Open your GitHub repository named 'watch'.
+3. Upload the CONTENTS of this folder to the repository root (not the folder itself).
+4. Allow GitHub to replace the existing index.html, app.js and styles.css. The other files may also be uploaded; keep your existing Firebase config unchanged if it matches this project.
+5. Commit the changes and wait for GitHub Pages to redeploy.
 
-FIRESTORE RULES
-In Firebase Console:
-Build > Firestore Database > Rules
-Replace the existing rules with firestore.rules and click Publish.
+FIREBASE
+- Project: invasive-watch-kerala
+- Firebase Authentication: Email/Password
+- Firestore collection: volunteers
+- Keep the existing Firestore rules published. They allow users to read their own profile and administrators (admin custom claim) to review/update volunteer records.
+- Do not make Firestore publicly readable.
 
-AUTHENTICATION
-Firebase Console > Authentication > Settings > Authorized domains
-Ensure your GitHub Pages domain and custom domain are authorised:
-- unaisbot.github.io (only if this is your actual GitHub Pages hostname)
-- bioinvasion.in
+ADMIN DASHBOARD
+The dashboard checks the Firebase ID token custom claim 'admin: true'. The two administrator accounts were configured separately using Firebase Admin SDK. After deployment, each administrator should log out and log in again so the refreshed token includes the claim.
 
-Do not add domains you do not own or use.
+Admins can view volunteer profiles and set approvalStatus to 'approved' or 'rejected'. Administrator profiles are protected from volunteer approval/rejection actions.
 
-API KEY
-Restrict the Firebase API key to the website's HTTP referrers and the APIs
-required by your Firebase application after deployment. Never publish service
-account private keys or Admin SDK credentials.
+SECURITY
+- Never put Firebase service-account private keys in this repository.
+- Do not assign admin privileges from browser-side code.
+- Firebase web configuration is public client configuration; protect data with Authentication and Firestore Security Rules.
+
+SCOPE
+This is the administrator and volunteer-account foundation only. Plant/animal species management, field surveys, quadrat records, animal sampling, offline data capture and public dashboards will be developed in later stages.

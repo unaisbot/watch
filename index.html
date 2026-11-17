@@ -83,6 +83,32 @@
       </div>
     </section>
 
+    <section id="adminSection" class="admin-card hidden" aria-labelledby="adminHeading">
+      <div class="admin-title-row">
+        <div>
+          <p class="eyebrow">ADMINISTRATION</p>
+          <h2 id="adminHeading">Volunteer management</h2>
+          <p class="admin-intro">Review applications and manage volunteer access to field-survey tools.</p>
+        </div>
+        <button id="refreshVolunteers" class="button button-outline" type="button">Refresh list</button>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><span>Total volunteers</span><strong id="totalVolunteerCount">0</strong></div>
+        <div class="stat-card"><span>Pending</span><strong id="pendingVolunteerCount">0</strong></div>
+        <div class="stat-card"><span>Approved</span><strong id="approvedVolunteerCount">0</strong></div>
+      </div>
+      <label for="volunteerSearch">Search volunteers</label>
+      <input id="volunteerSearch" type="search" placeholder="Search by name, email or status">
+      <div class="table-wrap">
+        <table class="volunteer-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Registered</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="volunteerTableBody"><tr><td colspan="5" class="empty-cell">Volunteer records will appear here.</td></tr></tbody>
+        </table>
+      </div>
+      <p id="adminMessage" class="message" role="status" aria-live="polite"></p>
+      <p class="small-note">Administrator accounts are protected and cannot be approved or rejected from this list.</p>
+    </section>
+
     <footer>
       <span>Invasive Watch Kerala · A TBARC initiative</span>
       <span id="connectionStatus">Connecting…</span>
